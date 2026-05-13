@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>AURA — Голосовой ассистент | 10А</title>
+  <!-- Подключаем стили и иконки -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at 20% 20%, #1a1a2e, #0f0f1a);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+      margin: 0;
+      color: #eaeaea;
+    }
+
+    .glass-panel {
+      width: 100%;
+      max-width: 750px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 3rem;
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.05);
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    h1 {
+      font-weight: 600;
+      font-size: 2.4rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #c084fc, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .subtitle {
+      color: #9ca3af;
+      margin-bottom: 2rem;
+      font-weight: 400;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .assistant-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #2e2e4a, #1a1a2e);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.7), 0 0 0 2px rgba(192,132,252,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.8rem;
+      transition: 0.3s;
+      position: relative;
+    }
+
+    .assistant-avatar i {
+      font-size: 4.5rem;
+      color: #c084fc;
+      filter: drop-shadow(0 0 12px #a855f7);
+    }
+
+    .listening .assistant-avatar {
+      box-shadow: 0 0 40px #a855f7, 0 0 0 4px rgba(168,85,247,0.7);
+      transform: scale(1.02);
+    }
+
+    .status-badge {
+      background: rgba(255,255,255,0.08);
+      padding: 0.5rem 1.5rem;
+      border-radius: 3rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #d1d5db;
+      margin-bottom: 1.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    #statusText {
+      color: #c084fc;
+      font-weight: 600;
+    }
+
+    .chat-window {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 2rem;
+      padding: 1.3rem;
+      height: 200px;
+      overflow-y: auto;
+      margin-bottom: 1.8rem;
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      backdrop-filter: blur(8px);
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .user-message {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 0.6rem 1.2rem;
+      border-radius: 1.5rem;
+      background: rgba(255,255,255,0.08);
+      color: #e5e7eb;
+      word-break: break-word;
+    }
+
+    .user-bubble {
+      background: #4f46e5;
+      color: white;
+      border-bottom-right-radius: 0.4rem;
+    }
+
+    .assistant-bubble {
+      background: rgba(255,255,255,0.12);
+      border-bottom-left-radius: 0.4rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin: 0.8rem 0 1.2rem;
+    }
+
+    .btn {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #f1f5f9;
+      padding: 0.9rem 1.5rem;
+      border-radius: 3rem;
+      font-weight: 500;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+      letter-spacing: 0.3px;
+    }
+
+    .btn:hover {
+      background: rgba(255,255,255,0.15);
+      border-color: rgba(255,255,255,0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.5);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      border: none;
+      box-shadow: 0 8px 20px rgba(124,58,237,0.4);
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    }
+
+    .music-controls {
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(0,0,0,0.4);
+      padding: 0.5rem 1.2rem;
+      border-radius: 3rem;
+    }
+
+    .music-btn {
+      background: transparent;
+      border: none;
+      color: #cbd5e1;
+      font-size: 1.3rem;
+      padding: 0.4rem 0.7rem;
+      border-radius: 2rem;
+      cursor: pointer;
+    }
+
+    .music-btn:hover {
+      color: white;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: #6b7280;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 1.3rem;
+      width: 100%;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+
+    .footer i {
+      color: #a78bfa;
+      margin: 0 0.2rem;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="glass-panel" id="app">
+    <h1>
+      <i class="fas fa-robot" style="font-size: 2rem; background: none; -webkit-text-fill-color: #c084fc;"></i> 
+      AURA
+    </h1>
+    <div class="subtitle">
+      <i class="fas fa-microchip"></i> голосовой интеллект
+    </div>
+
+    <div class="assistant-avatar" id="avatarContainer">
+      <i class="fas fa-head-side-virus"></i>
+    </div>
+
+    <div class="status-badge">
+      <i class="fas fa-circle" style="color: #22c55e; font-size: 0.6rem;" id="statusDot"></i>
+      <span id="statusText">Ожидание</span>
+    </div>
+
+    <div class="chat-window" id="chatBox">
+      <div class="message assistant-message">
+        <div class="bubble assistant-bubble">
+          Привет! Я Аура. Можешь спросить что угодно или сказать «включи музыку».
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="micButton">
+        <i class="fas fa-microphone"></i> Говорить
+      </button>
+      <button class="btn" id="stopMusicBtn">
+        <i class="fas fa-stop"></i> Стоп музыка
+      </button>
+    </div>
+
+    <div class="music-controls">
+      <button class="music-btn" id="playPauseBtn"><i class="fas fa-play"></i></button>
+      <button class="music-btn" id="prevBtn"><i class="fas fa-backward"></i></button>
+      <button class="music-btn" id="nextBtn"><i class="fas fa-forward"></i></button>
+      <span style="margin-left: 0.5rem; color:#cbd5e1; font-size:0.8rem;" id="trackTitle">Трек не выбран</span>
+    </div>
+
+    <div class="footer">
+      <i class="fas fa-graduation-cap"></i> Выполнили ученики 10А класса: 
+      <strong>Русинов, Иванов, Николаев</strong> 
+      <i class="fas fa-star"></i>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // --- Состояние ---
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+      
+      let isListening = false;
+      let conversationContext = []; // храним последние сообщения для диалога
+      
+      // Аудио элементы (имитация музыки через AudioContext + осциллятор, либо Web Audio)
+      let audioContext = null;
+      let musicOscillator = null;
+      let musicGain = null;
+      let isMusicPlaying = false;
+      let currentTrackName = "Мелодия Aura";
+      
+      // Плейлист (символический)
+      const tracks = [
+        { name: "Эмбиент Aura", freq: 261.63 }, // C4
+        { name: "Мечты о лете", freq: 329.63 }, // E4
+        { name: "Ритм города", freq: 392.00 }, // G4
+        { name: "Космос", freq: 440.00 }        // A4
+      ];
+      let currentTrackIndex = 0;
+
+      // --- DOM элементы ---
+      const chatBox = document.getElementById('chatBox');
+      const statusText = document.getElementById('statusText');
+      const statusDot = document.getElementById('statusDot');
+      const micButton = document.getElementById('micButton');
+      const avatarContainer = document.getElementById('avatarContainer');
+      const playPauseBtn = document.getElementById('playPauseBtn');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const stopMusicBtn = document.getElementById('stopMusicBtn');
+      const trackTitleSpan = document.getElementById('trackTitle');
+
+      // --- Инициализация синтеза речи ---
+      const synth = window.speechSynthesis;
+      
+      function speakText(text) {
+        if (!synth) return;
+        synth.cancel(); // остановить предыдущее
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ru-RU';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.1;
+        utterance.volume = 0.9;
+        // выбор голоса
+        const voices = synth.getVoices();
+        const ruVoice = voices.find(v => v.lang.includes('ru')) || voices[0];
+        if (ruVoice) utterance.voice = ruVoice;
+        synth.speak(utterance);
+      }
+
+      // --- Музыкальный движок (Web Audio API) ---
+      function initAudioContext() {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+      }
+
+      function stopMusic() {
+        if (musicOscillator) {
+          try { musicOscillator.stop(); } catch(e){}
+          musicOscillator.disconnect();
+          musicOscillator = null;
+        }
+        if (musicGain) {
+          musicGain.disconnect();
+          musicGain = null;
+        }
+        isMusicPlaying = false;
+        updatePlayPauseIcon(false);
+        trackTitleSpan.textContent = "Трек не выбран";
+      }
+
+      function playTrack(index) {
+        initAudioContext();
+        stopMusic();
+        if (!audioContext) return;
+        
+        const track = tracks[index];
+        if (!track) return;
+        
+        musicOscillator = audioContext.createOscillator();
+        musicGain = audioContext.createGain();
+        
+        musicOscillator.type = 'sine';
+        musicOscillator.frequency.setValueAtTime(track.freq, audioContext.currentTime);
+        
+        musicGain.gain.setValueAtTime(0.15, audioContext.currentTime); // тихая громкость
+        
+        musicOscillator.connect(musicGain);
+        musicGain.connect(audioContext.destination);
+        
+        musicOscillator.start();
+        isMusicPlaying = true;
+        currentTrackName = track.name;
+        trackTitleSpan.textContent = currentTrackName;
+        updatePlayPauseIcon(true);
+        currentTrackIndex = index;
+      }
+
+      function togglePlayPause() {
+        if (isMusicPlaying) {
+          // пауза - останавливаем осциллятор
+          stopMusic();
+        } else {
+          // играем текущий трек или первый
+          if (currentTrackIndex >= 0 && currentTrackIndex < tracks.length) {
+            playTrack(currentTrackIndex);
+          } else {
+            playTrack(0);
+          }
+        }
+      }
+
+      function nextTrack() {
+        const nextIndex = (currentTrackIndex + 1) % tracks.length;
+        playTrack(nextIndex);
+      }
+
+      function prevTrack() {
+        const prevIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+        playTrack(prevIndex);
+      }
+
+      function updatePlayPauseIcon(playing) {
+        if (playPauseBtn) {
+          playPauseBtn.innerHTML = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+        }
+      }
+
+      // --- Обработка диалога и ответов ---
+      function addMessageToChat(text, sender = 'user') {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender === 'user' ? 'user-message' : 'assistant-message'}`;
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${sender === 'user' ? 'user-bubble' : 'assistant-bubble'}`;
+        bubble.textContent = text;
+        messageDiv.appendChild(bubble);
+        chatBox.appendChild(messageDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        // Сохраняем контекст (ограничим 6 сообщений)
+        conversationContext.push({ role: sender, content: text });
+        if (conversationContext.length > 8) {
+          conversationContext.shift();
+        }
+      }
+
+      // Умный ответчик (имитация нейросети + команды)
+      function generateResponse(userMessage) {
+        const msg = userMessage.toLowerCase().trim();
+        
+        // Команды музыки
+        if (msg.includes('включи музыку') || msg.includes('играй музыку') || msg.includes('запусти музыку')) {
+          playTrack(0);
+          return "Включаю любимую музыку. Наслаждайся!";
+        }
+        if (msg.includes('выключи музыку') || msg.includes('стоп музыка') || msg.includes('останови музыку')) {
+          stopMusic();
+          return "Музыка остановлена.";
+        }
+        if (msg.includes('следующий трек') || msg.includes('дальше')) {
+          nextTrack();
+          return "Переключаю на следующий трек.";
+        }
+        if (msg.includes('предыдущий трек') || msg.includes('назад')) {
+          prevTrack();
+          return "Возвращаю предыдущий трек.";
+        }
+        if (msg.includes('пауза') || msg.includes('поставь на паузу')) {
+          if (isMusicPlaying) {
+            stopMusic();
+            return "Музыка на паузе.";
+          } else {
+            return "Сейчас ничего не играет.";
+          }
+        }
+        
+        // Приветствия и базовые диалоги
+        if (msg.includes('привет') || msg.includes('здравствуй')) {
+          return "Привет! Я Аура, твой голосовой помощник. Чем могу помочь?";
+        }
+        if (msg.includes('как дела') || msg.includes('как жизнь')) {
+          return "У меня всё отлично! Готова отвечать на вопросы и включать музыку.";
+        }
+        if (msg.includes('кто ты') || msg.includes('ты кто')) {
+          return "Я Аура — голосовой ассистент, созданный учениками 10А класса.";
+        }
+        if (msg.includes('спасибо') || msg.includes('благодарю')) {
+          return "Всегда пожалуйста! Обращайся.";
+        }
+        
+        // Ответ на вопрос (эмуляция знаний)
+        if (msg.includes('столица россии') || msg.includes('главный город россии')) {
+          return "Столица России — Москва.";
+        }
+        if (msg.includes('сколько планет') || msg.includes('планеты солнечной')) {
+          return "В Солнечной системе восемь планет.";
+        }
+        if (msg.includes('погода')) {
+          return "Я пока не подключена к сервису погоды, но советую выглянуть в окно!";
+        }
+        
+        // Универсальный ответ с контекстом
+        return "Интересный вопрос! Я постоянно учусь. Может, включить музыку или спросить что-то еще?";
+      }
+
+      function processUserInput(transcript) {
+        if (!transcript.trim()) return;
+        addMessageToChat(transcript, 'user');
+        
+        const response = generateResponse(transcript);
+        // небольшая задержка для естественности
+        setTimeout(() => {
+          addMessageToChat(response, 'assistant');
+          speakText(response);
+        }, 300);
+      }
+
+      // --- Голосовой ввод ---
+      function startListening() {
+        if (!recognition) {
+          alert("Web Speech API не поддерживается в этом браузере. Попробуйте Chrome.");
+          return;
+        }
+        if (isListening) return;
+        
+        recognition.lang = 'ru-RU';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        
+        recognition.onstart = () => {
+          isListening = true;
+          statusText.textContent = 'Слушаю...';
+          statusDot.style.color = '#facc15';
+          avatarContainer.classList.add('listening');
+          micButton.innerHTML = '<i class="fas fa-microphone-alt"></i> Слушаю...';
+        };
+        
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          processUserInput(transcript);
+        };
+        
+        recognition.onerror = (event) => {
+          console.error('Ошибка распознавания:', event.error);
+          if (event.error === 'no-speech') {
+            addMessageToChat('(тишина...)', 'assistant');
+          }
+          resetListeningState();
+        };
+        
+        recognition.onend = () => {
+          resetListeningState();
+        };
+        
+        recognition.start();
+      }
+
+      function resetListeningState() {
+        isListening = false;
+        statusText.textContent = 'Ожидание';
+        statusDot.style.color = '#22c55e';
+        avatarContainer.classList.remove('listening');
+        micButton.innerHTML = '<i class="fas fa-microphone"></i> Говорить';
+      }
+
+      // Ручная остановка (если нужно)
+      function abortListening() {
+        if (recognition && isListening) {
+          recognition.abort();
+          resetListeningState();
+        }
+      }
+
+      // --- Обработчики кнопок ---
+      micButton.addEventListener('click', () => {
+        if (isListening) {
+          abortListening();
+        } else {
+          startListening();
+        }
+      });
+
+      playPauseBtn.addEventListener('click', togglePlayPause);
+      nextBtn.addEventListener('click', nextTrack);
+      prevBtn.addEventListener('click', prevTrack);
+      
+      stopMusicBtn.addEventListener('click', () => {
+        stopMusic();
+        addMessageToChat("Музыка выключена.", 'assistant');
+        speakText("Музыка остановлена.");
+      });
+
+      // Предзагрузка голосов
+      window.addEventListener('load', () => {
+        if (synth) {
+          synth.getVoices(); // инициализация
+        }
+        // Приветственное сообщение
+        setTimeout(() => {
+          speakText("Привет! Я Аура. Спроси меня о чём-нибудь или скажи включи музыку.");
+        }, 500);
+      });
+
+      // Остановка музыки при закрытии вкладки (очистка)
+      window.addEventListener('beforeunload', () => {
+        stopMusic();
+        if (audioContext) audioContext.close();
+      });
+
+    })();
+  </script>
+</body>
+</html>
